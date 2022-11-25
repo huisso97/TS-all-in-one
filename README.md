@@ -22,5 +22,5 @@ npx tsc --init
 - `skipLibCheck` : 라이브러리 타입 파일(.d.ts)들 검사 넘기는 속성
 
 **타입검사 기능과 코드 변환 기능은 각각 별개이다**
-`npx tsc` : TS -> JS 변환 명령어
-`npx tsc --noemit`: 코드 타입 검사 명령어
+- `npx tsc` : TS -> JS 변환 명령어
+- `npx tsc --noemit`: 코드 타입 검사 명령어
