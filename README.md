@@ -153,3 +153,163 @@ if (head) {
   head.innerHTML = "hello";
 }
 ```
+
+### 원시 래퍼 타입, 템플릿 리터럴 타입, rest, 튜플
+
+#### 원시 래퍼 타입
+
+`String`은 래퍼 개체이므로, 타입을 지정할때는 소문자 `string`을 사용해햐아한다.
+
+#### 템플릿 리터럴 타입
+
+템플릿 리터럴 형태로 타입 단언을 할 수 있다.
+타입을 정교하게 선언할 때 사용되는 방식으로, 먼저 템플릿 리터럴 내 쓰일 타입을 단언한 후, 최종 템플릿 리터럴 타입을 단언하면 해당 타입(아래의 Greeting)을 할당받은 변수(아래의 c)는, 자동 추천 기능을 통해 타입 내 값들을 추천받을 수 있다.
+
+```typescript
+type World = "world" | "hell";
+
+// type Greeting = "hello world"
+type Greeting = `hello ${World}`;
+
+const c: Greeting = "hello world";
+// 또는  hello hell 을 추천받을 수 있음
+```
+
+#### rest
+
+rest 파라미터의 타입들도 아래와 같이 지정할 수 있다.
+
+```typescript
+function rest(...args: string[]) {
+  console.log(args); // [1,2,3]
+}
+
+rest("1", "2", "3");
+```
+
+#### 튜플
+
+튜플 타입의 경우, 대괄호 안에 지정된 각 매개변수의 타입들을 넣어준다.
+그러나 아래의 코드처럼, push 메서드로 인자를 추가할 경우, 타입스크립트가 에러로 감지를 못하기 때문에 유의해야한다.
+
+```typescript
+const tuple: [string, number] = ["1", 1];
+tuple[2] = "hello"; // error 발생
+tuple.push("hello"); // 정상 작동
+```
+
+### enum, keyof, typeof
+
+#### enum
+
+변수들을 하나의 그룹으로 묶고 싶을 때, enum을 쓴다.
+string 혹은 number를 지정할 수 있으며, 따로 지정을 하지 않으면 0부터 순서대로 지정된다(Direction 참고).
+
+```typescript
+const enum Direction {
+  Up,
+  Down,
+  Left,
+  Right,
+}
+
+const aa = Direction.Up; // const aa = 0
+
+const enum EDirection {
+  Up = 3,
+  Down = 5,
+  Left = 4,
+  Right = 6,
+}
+const a = EDirection.Up; // const a = 3
+const b = EDirection.Down; // const b= 5
+
+const enum SDirection {
+  Up = "123",
+  Down = "hello",
+  Left = "wow",
+  Right = "enum",
+}
+
+const aaa = SDirection.Left; // const aaa = "wow"
+```
+
+하나의 객체로 만드는 방식과 enum의 결과값은 똑같다.
+
+- 객체로 만드는 방식 : 해당 값들을 상수로 쓰겠다고 선언하는 것과 동일
+  - `as const` 접미사를 붙여서 사용함으로써, 고정적으로 타입을 지정한다.
+- 차이점 : 자바스크립트로 변환 시, 객체로 만든 방식은 코드가 남아있지만, enum은 사라진다(타입스크립트 문법이기 때문)
+
+```typescript
+// 객체로 타입을 만든 방식
+const ODirection = {
+  Up: 0,
+  Down: 1,
+  Left: 2,
+  Right: 3,
+} as const;
+
+// 위의 코드는 아래처럼 상수로 선언한 것과 동일하다.
+const ODirection: { Up: 0; Down: 1; Left: 2; Right: 3 } = {
+  Up: 0,
+  Down: 1,
+  Left: 2,
+  Right: 3,
+};
+
+// 타입 지정을 안했을 때, 타입스크립트는 내부 값들의 0,1,2,3 을 전부 number로만 인식한다.
+const ODirection = {
+  Up: 0,
+  Down: 1,
+  Left: 2,
+  Right: 3,
+};
+
+// enum 타입 방식
+const enum EDirection {
+  Up = 3,
+  Down = 5,
+  Left = 4,
+  Right = 6,
+}
+```
+
+#### keyof, typeof
+
+```typescript
+const obj = { a: "hi", b: "hello", c: "world" } as const;
+
+/*
+const obj: {
+  readonly a: "hi";
+  readonly b: "hello";
+  readonly c: "world";
+};
+**/
+
+// obj 타입의 key들만 들고올 때
+type Key = keyof typeof obj; // type Key = "a" | "b" | "c"
+
+// obj 타입의 value들만 들고올 때
+
+type Value = typeof obj[Key]; // type Value = "hi" | "hello" | "world"
+```
+
+### union(|)과 intersection(&)
+
+#### union타입은 여러 속성 중 하나만 있어도 된다.
+
+#### intersection타입은 모든 속성이 다 있어야 한다.
+
+```typescript
+// union
+type A = { hello: "world" } | { zero: "cho" };
+const a: A = { hello: "world" }; // no error
+
+// intersction
+type B = { hello: "world" } & { zero: "cho" };
+const b: B = { hello: "world" };
+//   'zero' 속성이 '{ hello: "world"; }' 형식에 없지만 '{ zero: "cho"; }' 형식에서 필수입니다.ts(2322)
+
+const c: B = { hello: "world", zero: "cho" }; // no error
+```

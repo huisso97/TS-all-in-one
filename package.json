@@ -1,0 +1,23 @@
+{
+  "name": "ts-all-in-one",
+  "version": "1.0.0",
+  "description": "자바스크립트를 타입스크립트로 바꾸면 안전성이 높아짐, 그러나 자유도는 줄어듦\r 그러나, 에러가 안나는 것이 중요!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/huisso97/TS-all-in-one.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/huisso97/TS-all-in-one/issues"
+  },
+  "homepage": "https://github.com/huisso97/TS-all-in-one#readme",
+  "dependencies": {
+    "typescript": "^4.9.3"
+  }
+}
