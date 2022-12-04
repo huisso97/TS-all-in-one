@@ -313,3 +313,318 @@ const b: B = { hello: "world" };
 
 const c: B = { hello: "world", zero: "cho" }; // no error
 ```
+
+### 잉여 속성 검사
+
+타입스크립트는 객체 리터럴을 바로 변수에 대입했을 때, 해당 타입에 없는 속성이 있을 경우(잉여 속성 검사) 에러를 반환한다.
+그러나, 중간에 해당 객체 리터럴을 대입한 다른 변수를 값으로 넣으면, 에러를 반환하지 않기 때문에 이 부분은 유의해야 한다.
+
+```typescript
+interface A {
+  a: string;
+}
+// 잉여 속성 검사 on
+const obj1: A = { a: "hello", b: "world" }; // error
+
+const obj = { a: "hello", b: "world" };
+const obj2: A = obj; // no error
+```
+
+### void의 두 가지 방법
+
+매개변수에 할당된 void type은 실제 return 값이 있어도 상관쓰지 않겠다라는 의미이고,
+함수의 리턴값에 할당된 void type은 함수의 return 값이 없거나 undefined라는 것을 의미한다.
+
+```typescript
+interface A {
+  talk: () => void;
+}
+
+const a: A = {
+  talk() {
+    return 3;
+  }, // no error
+};
+
+function B(): void {
+  return "hello"; // error : return값이 없거나 undefined여야함
+}
+```
+
+### unknown 과 any (그리고 타입 대입가능표)
+
+unknown은 지금 당장 타입을 모를 경우 사용하여 추후 as 연산자로 타입을 정의해줄 수 있지만, any는 타입 검사를 포기하기 때문에, unknown을 쓰는 것을 권장한다.
+
+### 타입 가드 (타입 좁히기)
+
+유니온 타입과 같이, 다양한 타입 가능성이 있을 경우, 타입 가드를 통해 타입을 좁혀서 관련 메서드를 사용한다.
+
+```typescript
+function numRoStr(a: number | number[] | string) {
+  if (typeof a === "number") {
+    a.toFixed(1);
+  } else if (Array.isArray(a)) {
+    a.slice(1);
+  } else if (typeof a === "string") {
+    a.charAt(3);
+  }
+}
+```
+
+#### 객체 타입 체크
+
+```typescript
+type B = { type: "b"; bbbb: string };
+type B = { type: "c"; cccc: string };
+type B = { type: "d"; dddd: string };
+function typeCheck(a: B | C | D) {
+  if ("bbbb" in a) {
+    a.type;
+  } else if ("ccc" in a) {
+    a.ccc;
+  } else {
+    a.ddd;
+  }
+}
+```
+
+#### 커스텀 타입 가드(is, 형식 조건자)
+
+타입을 구분해주는 커스텀 함수를 직접 만들 수 있다.
+if 문안에 쓰여 타입스크립트한테 정확한 타입을 알려줄 떄, 커스텀 타입 가드를 쓴다.
+
+```typescript
+interface Cat {
+  meow: number;
+}
+interface Dog {
+  bow: number;
+}
+
+function catOrDog(a: Cat | Dog): a is Dog {
+  // 타입 판별을 직접 만든다.
+  if ((a as Cat).meow) {
+    return false;
+  }
+  return true;
+}
+
+function pet(a: Cat | Dog) {
+    // true면, Dog
+    console.log(a.bow);
+  }
+  if ("meow" in a) {
+    console.log(a.meow);
+  }
+}
+```
+
+### {} 와 Object
+
+`{}`와 `Object`는 모든 타입을 나타낸다.
+`object`는 객체 타입을 나타낸다. 그러나, 객체 타이핑의 경우 object를 지양하고, interface, type, class로 정의하는 것을 권장한다.
+`unknown = {} | null | undefined` => null과 undefined를 포함한 모든 타입
+
+```typescript
+const x: {} = "hello";
+const y: Object = "hi"; // {}와 Object는 모든 타입 (null 과 undefined 제외)
+const xx: object = "hi";
+const yy: object = { hello: "world" };
+const z: unknown = "hi";
+
+if (z) {
+  z; // {}
+} else {
+  z; // null | undefined
+}
+```
+
+### readonly, 인덱스드 시그니처, 맵드 타입스
+
+#### readonly
+
+속성 값 변경을 막고자할 때, 사용한다.
+
+```typescript
+interface A {
+  readonly a: string;
+  b: string;
+}
+const aaaa: A = { a: "hello", b: "world" };
+aaaa.a = "123"; // error
+```
+
+#### 인덱스드 시그니처
+
+아래처럼, 키 타입을 정의하여 간단하게 표현할 수 있는 방법이다.
+
+```typescript
+// type A = { a: string; b: string; c: string };
+// 위와 동일한 의미를 가진다.
+type A = { [key: string]: string };
+
+const aaaa: A = { a: 3, b: 5, c: 6 };
+```
+
+#### 맵드 타입스
+
+key에 대한 타입을 제한할 때, 사용한다.
+
+- 참고로 interface 내에서는 `|` 과 `&` 이 안되기 때문에, type 단언을 사용하여 아래와 같이 표현한다(type B).
+
+```typescript
+type B = "Human" | "Mammal";
+type A = { [key in B]: B };
+const bbbb: A = { Human: "Mammal", Mammal: Human };
+```
+
+### 클래스의 새로운 기능들
+
+```typescript
+// class
+class A {
+  a: string;
+  b: number;
+  constructor() {
+    this.a = "123";
+    this.b = 123;
+  }
+
+  method();
+}
+// constructor을 안쓸경우, 타입 정의할때, 초기화도 같이 해줘야함
+class AA {
+  a: string = "123";
+  b: number = 123;
+
+  method();
+}
+```
+
+#### 클래스 인스턴스 및 클래스 타입
+
+클래스 이름은 인스턴스를 가리키고, 클래스 타입은 typeof 로 나타낸 결과값이다.
+
+```typescript
+const a: A = new A("123"); // a는 A의 인스턴스
+const B: typeof A = A; // B는 클래스 A의 타입을 가진 변수
+```
+
+#### private property
+
+프라이빗으로 선언한 속성에는 접근할 수 없다.
+
+```typescript
+class A {
+  #a: string;
+  b: number;
+  constructor() {
+    this.a = "123"; // a 속성을 찾을 수 없음
+    this.b = 123;
+  }
+
+  method();
+}
+```
+
+#### 클래스의 모양을 인터페이스로 통제하는 방법
+
+- implements, private, protected, public을 활용
+
+```typescript
+// 타입 추상화
+interface W {
+  readonly aa: string;
+  b: string;
+}
+
+// class B는 타입 W을 구현한다.
+class B implements W {
+  private aa: string = "123"; // private이므로 class B 내에서만 쓸 수 있음
+  protected b: string = "world";
+
+  method() {
+    console.log(this.aa); // private이니까 class B 내 메서드에서 사용 가능
+  }
+}
+
+class C extends B {
+  method() {
+    console.log(this.aa); // private은 상속 관계에서는 접근 불가
+    console.log(this.b); // protected는 상속받는 클래스까지는 접근 가능
+  }
+}
+new C().aa; // aa는 private이므로 접근 불가
+new C().b; // b는 protected이므로 접근 불가
+```
+
+```typescript
+//            public    protected     private
+클래스 내부      O           O            O
+인스턴스         O           X            X
+상속클래스       O           O            X
+```
+
+### 제너릭 기본
+
+타입을 변수처럼 만들어서 같은 타입을 하나의 문자로 표현한다.
+
+#### 제너릭 타입 제한하기
+
+- 예를 들어, 제너릭 타입들을 각각 `string`과 `number`로 제한할 때, `extends`로 제한한다.
+
+```typescript
+function add<T extends number, K extends string>(x: T, y: K): T {
+  return x + y;
+}
+add(1, "2");
+```
+
+```typescript
+function hello<T extends { a: string }>(x: T): T {
+  return x;
+}
+hello({ a: "hello" });
+```
+
+##### 콜백함수의 형태 제한
+
+```typescript
+// 콜백함수의 형태 제한
+function callbackFunc<T extends (a: string) => number>(x: T): T {
+  return x;
+}
+callbackFunc((a) => +a);
+```
+
+```typescript
+// 콜백함수에 제한이 없는 경우
+function noCallbackFunc<T extends (...args: any) => any>(x: T): T {
+  return x;
+}
+callbackFunc((a) => +a);
+```
+
+##### 생성자로 타입 제한
+
+```typescript
+// 생성자만 넣고 싶을 때
+function classFunc<T extends abstract new (...args: any) => any>(x: T): T {
+  return x;
+}
+// class는 class 자체가 타입이다
+class Q {}
+classFunc(Q);
+```
+
+### 매개변수 기본값 타이핑
+
+`:` 기준으로 우항에 타입핑을 한 후, `=` 기준으로 우항에 기본값 지정한다.
+
+```typescript
+const a = (b = { children: "zerocho" }) => {};
+
+// : 기준으로 우항에 타입핑을 한 후, = 기준으로 우항에 기본값 지정
+const a = (b : { children:string} = { children"zerocho" }) => {};
+
+```
