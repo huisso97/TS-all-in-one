@@ -102,5 +102,62 @@ callbackFunc((a) => +a);
 function classFunc<T extends abstract new (...args: any) => any>(x: T): T {
   return x;
 }
+// class는 class 자체가 타입이다
 class Q {}
 classFunc(Q);
+const predicate = (value: string | number): value is string =>
+  typeof value === "string";
+const filtered = ["1", 2, "3", 4, "5"].filter(predicate); // ['1','3','5'] string[]
+
+const notPredicatedFiltered = ["1", 2, "3", 4, "5"].filter(
+  (value) => typeof value === "string"
+);
+
+interface Arr<T> {
+  forEach(callbackFunc: (value: T) => void): void;
+  map<S>(callbackFunc: (value: T) => S): S[];
+  filter<S extends T>(callbackFunc: (value: T) => value is S): S[];
+}
+const arr: Arr<number> = [1, 2, 3];
+arr.forEach((val) => val.toString());
+arr.map((val) => +val);
+const b = arr.filter((v): v is number => v % 2 === 0);
+
+function a(x: string | number): number {
+  return 0;
+}
+
+type BB = (x: string) => number | string;
+let bb: BB = a;
+
+// 오버로딩
+interface Addition {
+  (x: number, y: number): number;
+  (x: string, y: string): string;
+}
+
+const addition: Addition = (x: any, y: any) => x + y;
+addition(1, 2);
+
+// 에러 처리법
+interface Axios {
+  get(): void;
+}
+
+class CustomError extends Error {
+  response?: {
+    data: any;
+  };
+}
+
+declare const axios: Axios;
+(async () => {
+  try {
+    await axios.get();
+  } catch (err) {
+    if (err instanceof CustomError) {
+      const customError = err;
+      customError.response?.data;
+    }
+  }
+})();
