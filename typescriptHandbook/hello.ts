@@ -22,7 +22,7 @@ function pet(a: Cat | Dog) {
     console.log(a.meow);
   }
 }
-
+Promise;
 // {} 와 object
 const x: {} = "hello";
 const y: Object = "hi"; // {}와 Object는 모든 타입
@@ -161,3 +161,66 @@ declare const axios: Axios;
     }
   }
 })();
+
+interface Profile {
+  name: string;
+  age: number;
+  married: boolean;
+}
+
+type Name = Profile["name"];
+
+type P<T> = {
+  [Key in keyof T]?: T[Key];
+};
+
+const newI: P<Profile> = {
+  name: "hui",
+  age: 26,
+};
+
+type Pi<T, S extends keyof T> = {
+  [Key in S]: T[Key];
+};
+
+type Animal = "Cat" | "Dog" | "Human";
+type Mammal = Exclude<Animal, "Human">;
+
+function zip(
+  x: number,
+  y: string,
+  z: boolean
+): { x: number; y: string; z: boolean } {
+  return { x, y, z };
+}
+type Params = Parameters<typeof zip>;
+type aa = Params[0];
+// type Params = [x: number, y: string, z: boolean]
+
+type PP<T extends (...args: any) => any> = T extends (...args: infer A) => any
+  ? A
+  : never;
+
+type R<T extends (...args: any) => any> = T extends (...args: any) => infer A
+  ? A
+  : never;
+
+const p1 = Promise.resolve(1)
+  .then((a) => a + 1)
+  .then((a) => a + 1)
+  .then((a) => a.toString());
+const p2 = Promise.resolve(2); // Promise<number>
+const p3 = new Promise((res, rej) => {
+  // Promise<unknown>
+  setTimeout(res, 1000);
+});
+
+type Result = Awaited<{ then(onfulfilled: (v: number) => number): any }>;
+// type Result = number
+
+Promise.all([p1, p2, p3]).then((result) => {
+  // {"0":string,"1":number,"2":undefined,length:3}
+  console.log(result); // {"3",2,undefined}
+});
+
+// T = [p1, p2, p3] => 왼쪽 형태는 오른쪽과 같다 {"0":p1, "1":p2,"2":p3,length:3 }
