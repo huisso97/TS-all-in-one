@@ -223,4 +223,9 @@ Promise.all([p1, p2, p3]).then((result) => {
   console.log(result); // {"3",2,undefined}
 });
 
-// T = [p1, p2, p3] => 왼쪽 형태는 오른쪽과 같다 {"0":p1, "1":p2,"2":p3,length:3 }
+// T = [p1, p2, p3] => 왼쪽 형태는 오른쪽과 같다 {"0":p1,"1":p2,"2":p3, length:3 }
+// keyof T = "0" | "1" | "2" | length
+
+const lst = [1, 2, 3] as const;
+type Lst = keyof typeof lst;
+const key: Lst = "3"; // '"3"' 형식은 'keyof readonly [1, 2, 3]' 형식에 할당할 수 없습니다.ts(2322)
