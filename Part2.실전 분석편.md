@@ -382,3 +382,114 @@ return (
   </div>
 );
 ```
+
+## Redux 타입 분석
+
+Redux : 상태를 절차적으로 바꾸어주는 라이브러리이다.
+
+### named exports만 있는 Redux 알아보기
+
+선언하는 기능명과 가져오는 기능명이 같도록 하는 방식을 named exports라고 한다.
+redux 타입을 보면 export default가 없고 named exports만 있다.
+그래서 아래와 같이, import해온다.
+
+```typescript
+import { compose, legacy_createStore as createStore } from "redux";
+```
+
+#### combineReducers 톺아보기
+
+```typescript
+// S는 initialState
+export function combineReducers<S, A extends Action = AnyAction>(
+  reducers: ReducersMapObject<S, A>
+): Reducer<CombinedState<S>, A>;
+
+// initialState 내 값들의 키와 액션으로 이루어짐
+export type ReducersMapObject<S = any, A extends Action = Action> = {
+  [K in keyof S]: Reducer<S[K], A>;
+};
+
+export type Reducer<S = any, A extends Action = AnyAction> = (
+  state: S | undefined,
+  action: A
+) => S;
+```
+
+#### 위의 코드들을 분석을 위해 합쳐보자
+
+```typescript
+export function combineReducers<S, A extends Action = AnyAction>(
+   [K in keyof S]: (
+  state: S[K]| undefined,
+  action: A
+) => S[K];
+):
+```
+
+```typescript
+import {
+  compose,
+  combineReducers,
+  legacy_createStore as createStore,
+} from "redux";
+
+const initialState = {
+  // user, posts => keyof S
+  user: {
+    // isLogginIn, data => S[K]
+    isLogginIn: false,
+    data: null,
+  },
+  posts: [],
+};
+
+const reducer = combineReducers({
+  user: (state, action) => {},
+  posts: (state, action) => {},
+});
+const store = createStore(reducer, initialState);
+```
+
+### action, reducer 타이핑하기
+
+액션에 들어가는 데이터를 동적으로 만들어내기 위해 보통 함수로 만들어서 dispatch한다.
+
+```typescript
+store.dispatch(
+  logIn({
+    id: 1,
+    name: "zerocho",
+    admin: true,
+  })
+);
+```
+
+### thunk 미들웨어 타이핑하기
+
+원래 action은 객체인데, thunk를 통해 함수형태로 action을 구성할 수 있다.
+그래서 아래와 같이, action이 함수이면 해당 함수를 (비동기 혹은 동기 등 자유롭게) action을 요청할 수 있다.
+
+```typescript
+export const logIn = (data) => {
+  // async action creator
+  return (dispatch, getState) => {
+    // async action
+    dispatch(logInRequest(data));
+    try {
+      setTimeout(() => {
+        dispatch(
+          logInSuccess({
+            userId: 1,
+            nickname: "zerocho",
+          })
+        );
+      }, 2000);
+    } catch (e) {
+      dispatch(logInFailure(e));
+    }
+  };
+};
+```
+
+### react-redux 타이핑하기
