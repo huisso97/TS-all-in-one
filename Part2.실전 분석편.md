@@ -492,4 +492,134 @@ export const logIn = (data) => {
 };
 ```
 
-### react-redux 타이핑하기
+## Node, Express 타입 분석
+
+### types/node
+
+```typescript
+declare module "fs"{
+  ...
+}
+```
+
+- decalre module... 형태를 앰비언트(abient) 모듈이라고 부른다.
+- 타입 선언만 있고 구현이 없는 것을 앰비언트라고 한다.
+
+### d.ts에서의 declare global
+
+- 함수를 먼저 검사해서 내가 쓸 수 있는 메서드들을 찾아낸다.
+- Error 타입을 사용하고자하는데, 특정 타입이 없으면 interface로 추가한다.
+- 충돌이 발생하면 declare global로 해결한다.
+
+```typescript
+declare global {
+  interface Error {
+    status: number;
+  }
+}
+
+// use함수에서 error 관련 쓸 수 있는 타입을 찾는다.
+
+const errorMiddleware: ErrorRequestHandler = (err: Error, req, res, next) => {
+  //err에는 status가 없어서 interface로 타입 추가한다.
+  // 이때, decalre global로 충돌 해결
+  console.log(err.status);
+};
+
+app.use(errorMiddleware);
+```
+
+그러나 보통 타입 지정은 `types.d.ts`에서 한다.
+declare global은 모듈 시스템이어야하므로, 임의의 import 문 혹은 export 문을 추가한다.
+(공식문서에서 **declare global은 모듈안에 있어야한다**는 내용을 참고)
+
+- export 문이 없면면 자바스크립트는 모듈이 아닌 스크립트파일로 읽어냄
+
+```typescript
+// types.d.ts
+
+declare global {
+  interface Error {
+    status: number;
+  }
+}
+
+// 임의의 export 문
+export {};
+```
+
+```typescript
+// types.d.ts
+// 혹은 declare global을 빼도 됨
+
+interface Error {
+  status: number;
+}
+```
+
+### passport에서 req.user 타이핑하기
+
+```typescript
+// express.ts
+// user에 zerocho를 추가하고자 한다.
+req.user?.zerocho;
+```
+
+- 위와 같이 특정 타입을 추가하기 위해, `types.d.ts`에 해당 자리에 타입을 추가한다.
+
+```typescript
+// types.d.ts
+declare global {
+  interface Error {
+    status: number;
+  }
+
+  namespace Express {
+    export interface User {
+      zerocho: string;
+    }
+  }
+}
+
+export {};
+```
+
+## 직접 라이브러리 타이핑하기
+
+### react-native-keyboard-aware-scrollview 직접 타이핑하기
+
+- 비슷한 기능의 타이핑된 모듈들을 분석 및 차용하여 직접 타이핑을 한다.
+
+```typescript
+// react-native-keyboard-aware-scrollview.d.d.ts
+// declare module을 통해 해당 모듈의 타입을 우리가 직접 지정
+declare module "react-native-keyboard-aware-scrollview" {
+  import * as React from "react";
+  class KeyboardAwareScrollViewComponent extends React.Component<ViewProps> {}
+  export class KeyboardAwareScrollView extends KeyboardAwareScrollViewComponent {}
+  export { KeyboardAwareScrollView };
+}
+```
+
+### connect-flash 직접 타이핑하기
+
+- 따로 connect-flash설치없이, d.ts 파일로 모듈 타이핑을 한다.
+- cookie-parser 모듈을 참조하여 middleware 타이핑 추가
+- named import(express.ts에서 Request)와 default import(express.ts에서 flash) 구분하여 타이핑
+
+```typescript
+declare module "connect-flash" {
+  global {
+    namespace Express {
+      interface Request {
+        flash(message: string): void;
+        flash(event: string, message: string): void;
+        flash(): { [key: string]: string[] };
+      }
+    }
+  }
+  import express = require("express");
+  function flash(): express.RequestHandler;
+  export default flash;
+}
+```
